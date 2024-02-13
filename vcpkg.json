@@ -1,0 +1,3 @@
+{
+	"dependencies": ["kissfft", "mdnsresponder", "boost-asio", "ixwebsocket"]
+}
