@@ -17,6 +17,6 @@ IMPORTANT: vcpkg and cmake should be installed on system drive (C:/ for example)
 In project dir
 
 ```sh
-vcpkg install
 git submodule update --init --recursive
+vcpkg install
 ```

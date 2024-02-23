@@ -14,6 +14,7 @@ add_executable(${CMAKE_PROJECT_NAME}
 # boost
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+
 # PortAudio
 set(PORTAUDIO_DIR ${SRC_DIR}/ears/portaudio)
 add_subdirectory(${PORTAUDIO_DIR})

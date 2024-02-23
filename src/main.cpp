@@ -4,8 +4,7 @@ client::LEDS leds;
 client::Client cl;
 effect::Spectrum *eff;
 
-
-static void cb(const ears::Samples& samples)
+static void cb(const ears::Samples &samples)
 {
 	eff->visualize(samples, leds);
 	cl.setColors(leds);
@@ -17,11 +16,12 @@ int main()
 	auto listener = ears::Listener(cb);
 
 	cl.connect();
-	cl.setColorCorrection(color::ColorCorrectionTypical8mmPixel);
-	cl.setColorTemperature(color::ColorTemperatureStandardFluorescent);
 	printf("connected\n");
 
-	auto spec = effect::Spectrum(listener.sampleRate, 1, 1, 30, 1000, 14);
+	cl.setColorCorrection(color::ColorCorrectionTypicalLEDStrip);
+	cl.setColorTemperature(color::ColorCorrectionUncorrectedColor);
+
+	auto spec = effect::Spectrum(listener.sampleRate, 0.3, 0.3, 30, 1000, 14);
 	eff = &spec;
 
 	listener.listen();
