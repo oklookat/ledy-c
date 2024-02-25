@@ -91,7 +91,7 @@ void Client::connect()
 {
 	auto ip = finder::findServer();
 
-	conn.setUrl(std::format("ws://{}:{}", ip.to_string().c_str(), TARGET_WS_PORT));
+	conn.setUrl(std::format("ws://{}:{}/ws", ip.to_string().c_str(), TARGET_WS_PORT));
 	conn.setPingInterval(45);
 	conn.setHandshakeTimeout(5);
 	conn.disablePerMessageDeflate();

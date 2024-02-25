@@ -16,7 +16,7 @@
 
 namespace client
 {
-	constexpr unsigned short TARGET_WS_PORT = 81;
+	constexpr unsigned short TARGET_WS_PORT = 80;
 
 	constexpr unsigned short LEDS_COUNT = 260;
 	typedef std::array<color::RGB, LEDS_COUNT> LEDS;

@@ -11,7 +11,7 @@
 namespace finder {
 	constexpr char TARGET_DOMAIN[7] = "local.";
 	constexpr char TARGET_SERVICE[11] = "_ledy._tcp";
-	constexpr char TARGET_HOSTNAME[12] = "ledy-server";
+	constexpr char TARGET_HOSTNAME[12] = "ledy";
 
 	typedef boost::asio::ip::address_v4 IPv4;
 
