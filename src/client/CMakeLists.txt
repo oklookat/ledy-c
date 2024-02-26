@@ -11,15 +11,12 @@ target_include_directories(${TARGET_NAME} PUBLIC ${SRC})
 find_package(ixwebsocket CONFIG REQUIRED)
 
 # mdnsresponder
-find_path(MDNSRESPONDER_INCLUDE_DIR dns_sd.h)
-find_library(MDNSRESPONDER_LIBRARY dnssd REQUIRED)
-target_include_directories(${TARGET_NAME} PUBLIC ${MDNSRESPONDER_INCLUDE_DIR})
 
 target_link_libraries(${TARGET_NAME} PUBLIC
     LedyPlatform
-    ${MDNSRESPONDER_LIBRARY}
     crypt32
     ws2_32
+    dnsapi
     ixwebsocket::ixwebsocket
 )
 

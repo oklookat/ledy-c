@@ -18,9 +18,6 @@ int main()
 	cl.connect();
 	printf("connected\n");
 
-	cl.setColorCorrection(color::ColorCorrectionTypicalLEDStrip);
-	cl.setColorTemperature(color::ColorCorrectionUncorrectedColor);
-
 	auto spec = effect::Spectrum(listener.sampleRate, 0.3, 0.3, 30, 1000, 14);
 	eff = &spec;
 

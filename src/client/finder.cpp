@@ -2,79 +2,91 @@
 
 using namespace finder;
 
-inline static IPv4 getIpByHostname(std::string hostname) {
-	boost::asio::io_context ioContext;
-	boost::system::error_code ec;
+#if PLATFORM_NAME == PLATFORM_NAME_WINDOWS
 
-	boost::asio::ip::tcp::resolver resolver(ioContext);
-	boost::asio::ip::tcp::resolver::results_type endpoint = resolver.resolve(hostname, "", ec);
+typedef struct onIpFinder {
+	bool found = false;
+	IPv4 ip;
+} onIpFinder;
 
-	if (ec)
+// Omg.
+static std::string pStrToString(const PSTR str) {
+	// I tried to convert wchar to char, but it dont work. So...
+	const int maxDnsNameLen = 253;
+	size_t strLen = 0;
+	char* resBuff = new char[maxDnsNameLen];
+	size_t buffI = 0;
+	for (size_t i = 0; i < maxDnsNameLen; i++)
 	{
-		auto errMsg = std::format("platform::getIpByHostname / boost::system::error_code: {}", ec.message());
-		throw std::runtime_error(errMsg);
+		auto sChar = str[i];
+		if (sChar == NULL && i > 0 && str[i - 1] == NULL) {
+			resBuff[buffI + 1] = NULL;
+			break;
+		}
+		if (sChar == NULL) {
+			continue;
+		}
+		resBuff[buffI] = sChar;
+		buffI++;
+		strLen++;
 	}
-
-	return endpoint->endpoint().address().to_v4();
+	auto result = std::string(resBuff, strLen);
+	delete[]resBuff;
+	return result;
 }
 
-static void dnsCallback(DNSServiceRef sdRef, DNSServiceFlags flags, uint32_t interfaceIndex,
-	DNSServiceErrorType errorCode, const char* serviceName, const char* regtype,
-	const char* replyDomain, void* context)
-{
-	auto onFinder = static_cast<onIpFinder*>(context);
-
-	if (errorCode != kDNSServiceErr_NoError)
-	{
-		auto errMsg = std::format("dnsCb: {}", errorCode);
-		throw std::runtime_error(errMsg);
+static void completionRoutine(PVOID pQueryContext, PDNS_QUERY_RESULT pQueryResults) {
+	onIpFinder* finder = static_cast<onIpFinder*>(pQueryContext);
+	if (pQueryResults->pQueryRecords == NULL) {
+		return;
 	}
 
-	if (flags & kDNSServiceFlagsAdd)
-	{
-		if (strcmp(serviceName, TARGET_HOSTNAME) != 0)
-		{
-			return;
+	auto found = false;
+	auto firstRecord = pQueryResults->pQueryRecords;
+	auto records = pQueryResults->pQueryRecords;
+	while (records != nullptr) {
+		if (records->wType == DNS_TYPE_A) {
+			auto record = records->Data;
+			finder->ip = boost::asio::ip::make_address_v4(ntohl(record.A.IpAddress));
+			auto named = pStrToString(records->pName);
+			//std::print("found ip: {} | name: {}\n", finder->ip.to_string().c_str(), named);
+			if (named == LEDY_TARGET_SERVER) {
+				found = true;
+				break;
+			}
 		}
-		onFinder->ip = getIpByHostname(std::string(serviceName));
-		onFinder->found = true;
+		records = records->pNext;
 	}
-};
+	DnsRecordListFree(firstRecord);
+	finder->found = true;
+}
 
 IPv4 finder::findServer()
 {
 	onIpFinder onFinder;
 	onFinder.found = false;
 
-	DNSServiceRef serviceRef;
+	DNS_SERVICE_CANCEL cancel{};
 
-	DNSServiceErrorType err = DNSServiceBrowse(&serviceRef, 0, 0,
-		TARGET_SERVICE, TARGET_DOMAIN, dnsCallback, &onFinder);
-	if (err != kDNSServiceErr_NoError)
-	{
-		DNSServiceRefDeallocate(serviceRef);
-		auto errMsg = std::format("Client::Client / DNSServiceBrowse: {}", err);
-		if (err == kDNSServiceErr_ServiceNotRunning)
-		{
-			errMsg = std::string("Bonjour not started or not installed");
-		}
-		throw std::runtime_error(errMsg);
+	DNS_SERVICE_BROWSE_REQUEST req{};
+	req.Version = DNS_QUERY_REQUEST_VERSION2;
+	req.InterfaceIndex = 0;
+	req.QueryName = LEDY_TARGET_QUERY;
+	req.pBrowseCallbackV2 = completionRoutine;
+	req.pQueryContext = &onFinder;
+
+	if (DnsServiceBrowse(&req, &cancel) != DNS_REQUEST_PENDING) {
+		throw std::runtime_error(std::format("dns error: {}", GetLastError()));
 	}
 
 	while (!onFinder.found)
 	{
-		printf("trying to find the ip...\n");
-		err = DNSServiceProcessResult(serviceRef);
-		if (err != kDNSServiceErr_NoError)
-		{
-			DNSServiceRefDeallocate(serviceRef);
-			auto errMsg = std::format("Client::Client / DNSServiceProcessResult: {}", err);
-			throw std::runtime_error(errMsg);
-		}
-		platform::sleep(10);
+		platform::sleep(1);
 	}
 
-	DNSServiceRefDeallocate(serviceRef);
+	DnsServiceBrowseCancel(&cancel);
 
 	return onFinder.ip;
 }
+
+#endif

@@ -87,11 +87,14 @@ Client::~Client()
 	ix::uninitNetSystem();
 }
 
+
 void Client::connect()
 {
 	auto ip = finder::findServer();
+	auto ipStr = ip.to_string();
+	std::printf("found ip: %s\n", ipStr.c_str());
 
-	conn.setUrl(std::format("ws://{}:{}/ws", ip.to_string().c_str(), TARGET_WS_PORT));
+	conn.setUrl(std::format("ws://{}:{}/ws", ipStr.c_str(), TARGET_WS_PORT));
 	conn.setPingInterval(45);
 	conn.setHandshakeTimeout(5);
 	conn.disablePerMessageDeflate();
