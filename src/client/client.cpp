@@ -3,36 +3,18 @@
 using namespace client;
 
 // 2 bytes.
-static std::array<uint8_t, 2> u16toU8(uint16_t v) {
+static std::array<uint8_t, 2> u16toU8(uint16_t v)
+{
 	std::array<uint8_t, 2> r{};
 	std::memcpy(r.data(), &v, sizeof(v));
 	return r;
 }
 
-// 4 bytes.
-static std::array<uint8_t, 4> u32toU8(uint32_t v) {
-	std::array<uint8_t, 4> r{};
-	std::memcpy(r.data(), &v, sizeof(v));
-	return r;
-}
-
-static std::vector<unsigned char> new5byteCommand(Command c, unsigned int v) {
-	auto data = u32toU8(v);
-	std::vector<unsigned char> result(5, 0);
-	result[0] = c;
-	size_t cmdI = 1;
-	for (size_t i = 0; i < data.size(); i++)
-	{
-		result[cmdI] = data[i];
-		cmdI++;
-	}
-	return result;
-}
-
 // <GRBGRBGRB>.
 //
 // 3 bytes per led.
-static std::vector<unsigned char> rgbToU8(LEDS& leds) {
+static std::vector<unsigned char> rgbToU8(LEDS &leds)
+{
 	size_t resultI = 0;
 	std::vector<unsigned char> result(LEDS_COUNT * 3, 0);
 	for (auto i = 0; i < LEDS_COUNT; i++)
@@ -45,7 +27,8 @@ static std::vector<unsigned char> rgbToU8(LEDS& leds) {
 	return result;
 }
 
-static std::vector<unsigned char> newCommandSetColors(LEDS& leds) {
+static std::vector<unsigned char> newCommandSetColors(LEDS &leds)
+{
 
 	std::vector<unsigned char> cmd(3 + LEDS_COUNT * 3, 0);
 
@@ -69,15 +52,8 @@ static std::vector<unsigned char> newCommandSetColors(LEDS& leds) {
 	return cmd;
 }
 
-static std::vector<unsigned char> newCommandSetColorCorrection(color::tCorrection v) {
-	return new5byteCommand(CommandSetColorCorrection, v);
-}
-
-static std::vector<unsigned char> newCommandSetColorTemperature(color::tTemperature v) {
-	return new5byteCommand(CommandSetColorTemperature, v);
-}
-
-Client::Client() {
+Client::Client()
+{
 	ix::initNetSystem();
 }
 
@@ -87,41 +63,32 @@ Client::~Client()
 	ix::uninitNetSystem();
 }
 
-
 void Client::connect()
 {
 	auto ip = finder::findServer();
 	auto ipStr = ip.to_string();
 	std::printf("found ip: %s\n", ipStr.c_str());
 
-	conn.setUrl(std::format("ws://{}:{}/ws", ipStr.c_str(), TARGET_WS_PORT));
-	conn.setPingInterval(45);
+	auto url = std::format("ws://{}:{}/ws", ipStr, TARGET_WS_PORT);
+	conn.setUrl(url);
+	conn.setPingInterval(15);
 	conn.setHandshakeTimeout(5);
 	conn.disablePerMessageDeflate();
 	conn.setMaxWaitBetweenReconnectionRetries(10 * 1000);
 
-	conn.setOnMessageCallback([](const ix::WebSocketMessagePtr& msg)
-		{
+	conn.setOnMessageCallback([](const ix::WebSocketMessagePtr &msg)
+							  {
 
 			if (msg->type == ix::WebSocketMessageType::Error)
 			{
-				throw std::runtime_error(std::format("WS ERROR: {}", msg->str.c_str()));
+				auto eMsg = std::format("WS ERROR: {}", msg->str);
+				//throw std::runtime_error(eMsg);
 			} });
 
 	conn.start();
 }
 
-void client::Client::setColors(LEDS& leds)
+void client::Client::setColors(LEDS &leds)
 {
 	conn.sendBinary(newCommandSetColors(leds));
-}
-
-void client::Client::setColorCorrection(color::tCorrection v)
-{
-	conn.sendBinary(newCommandSetColorCorrection(v));
-}
-
-void client::Client::setColorTemperature(color::tTemperature v)
-{
-	conn.sendBinary(newCommandSetColorTemperature(v));
 }

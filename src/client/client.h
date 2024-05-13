@@ -19,15 +19,13 @@ namespace client
 	constexpr unsigned short TARGET_WS_PORT = 80;
 
 	constexpr unsigned short LEDS_COUNT = 260;
-	typedef std::array<color::RGB, LEDS_COUNT> LEDS;
+	typedef std::array<color::TheRGB, LEDS_COUNT> LEDS;
 
-	typedef unsigned char tCommand;
+	typedef unsigned char _Command;
 
-	typedef enum : tCommand
+	typedef enum : _Command
 	{
 		CommandSetColors,
-		CommandSetColorCorrection,
-		CommandSetColorTemperature
 	} Command;
 
 	class Client
@@ -36,9 +34,7 @@ namespace client
 		Client();
 		~Client();
 		void connect();
-		void setColors(LEDS& leds);
-		void setColorCorrection(color::tCorrection v);
-		void setColorTemperature(color::tTemperature v);
+		void setColors(LEDS &leds);
 
 	private:
 		ix::WebSocket conn;

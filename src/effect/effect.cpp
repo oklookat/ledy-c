@@ -2,18 +2,6 @@
 
 using namespace effect;
 
-static void changeBrightness(color::RGB* color, float percents)
-{
-	if (percents > 100.0)
-		percents = 100.0;
-	else if (percents < 0.0)
-		percents = 0.0;
-	auto factor = percents / 100.0;
-	color->R = color->R * factor;
-	color->G = color->G * factor;
-	color->B = color->B * factor;
-};
-
 static float getFreqPercents(dsp::ChannelFFT fft, double sampleRate, unsigned short fromHz, unsigned short toHz)
 {
 	if (fft.size() == 0)
@@ -52,11 +40,11 @@ SpectrumRange::SpectrumRange(
 	this->sampleRate = sampleRate;
 	this->fromHz = fromHz;
 	this->toHz = toHz;
-	filter = std::shared_ptr<dsp::ExpFilter>(
-		new dsp::ExpFilter(percents, alphaDecay, alphaRise));
+	filter = std::shared_ptr<dsp::ExponentialSmoothing>(
+		new dsp::ExponentialSmoothing(percents, alphaDecay));
 }
 
-void SpectrumRange::process(const dsp::ChannelFFT& spectrum)
+void SpectrumRange::process(const dsp::ChannelFFT &spectrum)
 {
 	auto idxs = dsp::getFrequencyRangeIndexes(spectrum, sampleRate, fromHz, toHz);
 	this->index1 = idxs.first;
@@ -68,9 +56,9 @@ void SpectrumRange::process(const dsp::ChannelFFT& spectrum)
 	prevPercents = percentsDirty;
 }
 
-void Spectrum::processSamples(const ears::Samples& samples)
+void Spectrum::processSamples(const platform::audio::Samples &samples)
 {
-	auto sampleRate = samples.sampleRate;
+	auto sampleRate = this->sampleRate;
 	this->mono = samples.mono;
 	this->monoFFT = dsp::makeFFT(samples.mono);
 
@@ -85,7 +73,7 @@ void Spectrum::processSamples(const ears::Samples& samples)
 	}
 }
 
-void Spectrum::visualize(const ears::Samples& samples, client::LEDS& leds)
+void Spectrum::visualize(const platform::audio::Samples samples, client::LEDS &leds)
 {
 	processSamples(samples);
 	auto rangesSize = ranges.size();
@@ -97,8 +85,8 @@ void Spectrum::visualize(const ears::Samples& samples, client::LEDS& leds)
 		auto endIndex = (i + 1) * rangeSize;
 		for (size_t x = startIndex; x < endIndex; x++)
 		{
-			leds[x] = { 255, 255, 255 };
-			changeBrightness(&leds[x], ranges[i].percents);
+			leds[x].set(255, 0, 0);
+			leds[x].setBrightness(ranges[i].percents);
 		}
 	}
 }
@@ -109,6 +97,7 @@ Spectrum::Spectrum(
 	float fromHz, float toHz,
 	unsigned short numBands)
 {
+	this->sampleRate = sampleRate;
 
 	maxAmplitude = 0;
 	mono = {};

@@ -2,32 +2,25 @@
 
 using namespace dsp;
 
-ExpFilter::ExpFilter(float value, float alphaDecay, float alphaRise)
+ExponentialSmoothing::ExponentialSmoothing(float value, float decay)
 {
-	this->value = value;
-	this->alphaDecay = alphaDecay;
-	this->alphaRise = alphaRise;
-};
+	smoothedValue = value;
+	alpha = decay;
+}
 
-float ExpFilter::update(float newValue)
+float ExponentialSmoothing::update(float newValue)
 {
-	float alpha = this->alphaDecay;
-	if (newValue > this->value)
-	{
-		alpha = this->alphaRise;
-	};
-	this->value = alpha * newValue + (1.0 - alpha) * this->value;
-	return this->value;
-};
+	smoothedValue = alpha * newValue + (1 - alpha) * smoothedValue;
+	return smoothedValue;
+}
 
-ChannelFFT dsp::makeFFT(const Channel &chan)
+ChannelFFT dsp::makeFFT(const platform::audio::Channel &chan)
 {
 	auto chanSize = chan.size();
 
 	// Setup.
 	kiss_fft_cfg cfg = kiss_fft_alloc(chanSize, 0, NULL, NULL);
 	auto in = new kiss_fft_cpx[chanSize];
-	auto output = new kiss_fft_cpx[chanSize];
 
 	// Fill data.
 	for (size_t i = 0; i < chanSize; ++i)
@@ -37,6 +30,7 @@ ChannelFFT dsp::makeFFT(const Channel &chan)
 	}
 
 	// Run & release.
+	auto output = new kiss_fft_cpx[chanSize];
 	kiss_fft(cfg, in, output);
 	free(cfg);
 	delete[] in;

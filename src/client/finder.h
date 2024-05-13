@@ -5,13 +5,13 @@
 // ip
 #include "boost/asio.hpp"
 
-//#include <format>
+// #include <format>
 #include <exception>
 #include "windows.h"
 #include "windns.h"
 
-
-namespace finder {
+namespace finder
+{
 	constexpr auto LEDY_TARGET_QUERY = L"_ledy._tcp.local";
 	constexpr auto LEDY_TARGET_SERVER = "ledy.local";
 

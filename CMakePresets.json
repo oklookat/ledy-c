@@ -6,7 +6,9 @@
 			"binaryDir": "${sourceDir}/build",
 			"cacheVariables": {
 				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-				"CMAKE_BUILD_TYPE": "Debug"
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_CXX_COMPILER": "gcc",
+				"CMAKE_C_COMPILER": "gcc"
 			}
 		},
 		{
@@ -14,7 +16,9 @@
 			"binaryDir": "${sourceDir}/build",
 			"cacheVariables": {
 				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-				"CMAKE_BUILD_TYPE": "Release"
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_CXX_COMPILER": "gcc",
+				"CMAKE_C_COMPILER": "gcc"
 			}
 		}
 	],

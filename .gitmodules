@@ -1,3 +1,0 @@
-[submodule "src/ears/portaudio"]
-	path = src/ears/portaudio
-	url = https://github.com/PortAudio/portaudio

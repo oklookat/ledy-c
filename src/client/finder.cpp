@@ -2,70 +2,85 @@
 
 using namespace finder;
 
-#if PLATFORM_NAME == PLATFORM_NAME_WINDOWS
+#if defined(PLATFORM_WINDOWS)
 
-typedef struct onIpFinder {
+typedef struct onIpFinder
+{
 	bool found = false;
 	IPv4 ip;
 } onIpFinder;
 
-// Omg.
-static std::string pStrToString(const PSTR str) {
-	// I tried to convert wchar to char, but it dont work. So...
+// Just std::string(str) not work. So...
+static std::string pStrToString(const PSTR str)
+{
 	const int maxDnsNameLen = 253;
 	size_t strLen = 0;
-	char* resBuff = new char[maxDnsNameLen];
+	// Allocate buffer on stack with space for null terminator.
+	char resBuff[maxDnsNameLen + 1];
 	size_t buffI = 0;
+
 	for (size_t i = 0; i < maxDnsNameLen; i++)
 	{
 		auto sChar = str[i];
-		if (sChar == NULL && i > 0 && str[i - 1] == NULL) {
-			resBuff[buffI + 1] = NULL;
+		// Check for end of string.
+		if (sChar == '\0' && i > 0 && str[i - 1] == '\0')
+		{
+			// Ensure null termination.
+			resBuff[buffI] = '\0';
 			break;
 		}
-		if (sChar == NULL) {
+		if (sChar == '\0')
+		{
 			continue;
 		}
-		resBuff[buffI] = sChar;
-		buffI++;
+		resBuff[buffI++] = sChar;
 		strLen++;
 	}
-	auto result = std::string(resBuff, strLen);
-	delete[]resBuff;
-	return result;
+
+	return std::string(resBuff, strLen);
 }
 
-static void completionRoutine(PVOID pQueryContext, PDNS_QUERY_RESULT pQueryResults) {
-	onIpFinder* finder = static_cast<onIpFinder*>(pQueryContext);
-	if (pQueryResults->pQueryRecords == NULL) {
+static void completionRoutine(PVOID pQueryContext, PDNS_QUERY_RESULT pQueryResults)
+{
+	auto finder = static_cast<onIpFinder *>(pQueryContext);
+	finder->found = false;
+
+	if (pQueryResults->pQueryRecords == NULL)
+	{
 		return;
 	}
 
 	auto found = false;
 	auto firstRecord = pQueryResults->pQueryRecords;
 	auto records = pQueryResults->pQueryRecords;
-	while (records != nullptr) {
-		if (records->wType == DNS_TYPE_A) {
-			auto record = records->Data;
-			finder->ip = boost::asio::ip::make_address_v4(ntohl(record.A.IpAddress));
-			auto named = pStrToString(records->pName);
-			//std::print("found ip: {} | name: {}\n", finder->ip.to_string().c_str(), named);
-			if (named == LEDY_TARGET_SERVER) {
-				found = true;
-				break;
-			}
+
+	while (records != nullptr)
+	{
+		if (records->wType != DNS_TYPE_A)
+		{
+			records = records->pNext;
+			continue;
 		}
-		records = records->pNext;
+
+		auto record = records->Data;
+		auto named = pStrToString(records->pName);
+		if (named != LEDY_TARGET_SERVER)
+		{
+			records = records->pNext;
+			continue;
+		}
+
+		found = true;
+		finder->ip = boost::asio::ip::make_address_v4(ntohl(record.A.IpAddress));
+		break;
 	}
-	DnsRecordListFree(firstRecord);
-	finder->found = true;
+
+	DnsRecordListFree(firstRecord, records);
+	finder->found = found;
 }
 
 IPv4 finder::findServer()
 {
-	onIpFinder onFinder;
-	onFinder.found = false;
-
 	DNS_SERVICE_CANCEL cancel{};
 
 	DNS_SERVICE_BROWSE_REQUEST req{};
@@ -73,9 +88,11 @@ IPv4 finder::findServer()
 	req.InterfaceIndex = 0;
 	req.QueryName = LEDY_TARGET_QUERY;
 	req.pBrowseCallbackV2 = completionRoutine;
+	onIpFinder onFinder;
 	req.pQueryContext = &onFinder;
 
-	if (DnsServiceBrowse(&req, &cancel) != DNS_REQUEST_PENDING) {
+	if (DnsServiceBrowse(&req, &cancel) != DNS_REQUEST_PENDING)
+	{
 		throw std::runtime_error(std::format("dns error: {}", GetLastError()));
 	}
 
