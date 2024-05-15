@@ -6,8 +6,9 @@
 
 #include "../platform/audio.h"
 #include "../client/client.h"
-#include "../audio/dsp.h"
+#include "../dsp/dsp.h"
 #include "../client/color.h"
+#include "../effect/debug.h"
 
 namespace effect
 {

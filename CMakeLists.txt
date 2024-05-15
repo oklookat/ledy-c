@@ -17,7 +17,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 add_subdirectory(${SRC_DIR}/platform)
 add_subdirectory(${SRC_DIR}/client)
-add_subdirectory(${SRC_DIR}/audio)
+add_subdirectory(${SRC_DIR}/dsp)
 add_subdirectory(${SRC_DIR}/effect)
 
 # Standarts.
@@ -29,6 +29,6 @@ set_property(TARGET ${CMAKE_PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)
 target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC
     LedyPlatform
     LedyClient
-    LedyAudio
+    LedyDSP
     LedyEffect
 )

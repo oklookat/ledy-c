@@ -55,10 +55,17 @@ static std::vector<unsigned char> newCommandSetColors(LEDS &leds)
 Client::Client()
 {
 	ix::initNetSystem();
+	websocketThread = std::thread(&Client::websocketLoop, this);
 }
 
 Client::~Client()
 {
+	{
+		std::lock_guard<std::mutex> lock(queueMutex);
+		stopFlag = true;
+	}
+	queueCondition.notify_all();
+	websocketThread.join();
 	conn.close();
 	ix::uninitNetSystem();
 }
@@ -88,7 +95,36 @@ void Client::connect()
 	conn.start();
 }
 
+void client::Client::visualize(LEDS &leds)
+{
+	{
+		std::lock_guard<std::mutex> lock(queueMutex);
+		ledsQueue.push(leds);
+	}
+	queueCondition.notify_one();
+}
+
 void client::Client::setColors(LEDS &leds)
 {
 	conn.sendBinary(newCommandSetColors(leds));
+}
+
+void client::Client::websocketLoop()
+{
+	while (true)
+	{
+		client::LEDS ledsToSend;
+		{
+			std::unique_lock<std::mutex> lock(queueMutex);
+			queueCondition.wait(lock, [this]
+								{ return !ledsQueue.empty() || stopFlag; });
+			if (stopFlag && ledsQueue.empty())
+			{
+				break;
+			}
+			ledsToSend = ledsQueue.front();
+			ledsQueue.pop();
+		}
+		setColors(ledsToSend);
+	}
 }

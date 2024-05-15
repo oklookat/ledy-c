@@ -7,6 +7,13 @@
 #include "color.h"
 #include "finder.h"
 
+// thread
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+#include <thread>
+
 // ixwebsocket
 #include "boost/asio.hpp"			   // ip + ixwebsocket dep.
 #include "boost/system/error_code.hpp" // ip + ixwebsocket dep.
@@ -34,9 +41,18 @@ namespace client
 		Client();
 		~Client();
 		void connect();
-		void setColors(LEDS &leds);
+		void visualize(LEDS &leds);
 
 	private:
 		ix::WebSocket conn;
+		//
+		bool stopFlag = false;
+		bool disabled = false;
+		std::thread websocketThread;
+		std::queue<LEDS> ledsQueue;
+		std::mutex queueMutex;
+		std::condition_variable queueCondition;
+		void setColors(LEDS &leds);
+		void websocketLoop();
 	};
 };

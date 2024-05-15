@@ -6,8 +6,3 @@ void platform::initialize()
 {
 	SetConsoleOutputCP(CP_UTF8);
 }
-
-void platform::sleep(int ms)
-{
-	Sleep(ms);
-}

@@ -7,6 +7,7 @@ elseif (UNIX)
 
 elseif (WIN32)
     list(APPEND SRCS
+    ${SRC}/platform.cpp
     ${SRC}/platform_windows.cpp
     ${SRC}/audio_windows.cpp
     )

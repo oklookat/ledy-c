@@ -1,12 +1,8 @@
+#include "audio.h"
+
 #include <windows.h>
 #include <audioclient.h>
 #include <mmdeviceapi.h>
-#include <stdio.h>
-#include <functiondiscoverykeys_devpkey.h>
-#include <vector>
-
-#include "audio.h"
-#include <thread>
 
 using namespace platform;
 
@@ -190,7 +186,7 @@ audio::Sink::Sink(SamplesCallback cb, int expectedLatencyMs)
 	}
 	// TODO: check formulas on another audio devices.
 	ptCtx->optimalBuff = (ptCtx->pWaveFormat->nSamplesPerSec * (expectedLatencyMs / 5)) / (1000 * ptCtx->pWaveFormat->nChannels);
-	ptCtx->maxAllowedBuff = (ptCtx->pWaveFormat->nSamplesPerSec * (expectedLatencyMs / 3)) / (1000 * ptCtx->pWaveFormat->nChannels);
+	ptCtx->maxAllowedBuff = (ptCtx->pWaveFormat->nSamplesPerSec * (expectedLatencyMs / 2)) / (1000 * ptCtx->pWaveFormat->nChannels);
 
 	// Get the capture client.
 	hr = ptCtx->pAudioClient->GetService(__uuidof(IAudioCaptureClient), (void **)&ptCtx->pCaptureClient);
@@ -222,7 +218,7 @@ void audio::Sink::listen()
 	bool ready = false;
 	while (true)
 	{
-		Sleep(1);
+		auto sleeper = platform::AdvancedSleep(1);
 		BYTE *pData;
 		UINT32 numFramesAvailable;
 		DWORD flags;
@@ -260,5 +256,6 @@ void audio::Sink::listen()
 		{
 			throw Exception("pCaptureClient->ReleaseBuffer", hr);
 		}
+		sleeper.sleep();
 	}
 }
