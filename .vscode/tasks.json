@@ -5,17 +5,21 @@
 			"type": "cmake",
 			"label": "build debug",
 			"command": "build",
-			"targets": ["ALL_BUILD"],
+			"targets": [
+				"ALL_BUILD"
+			],
 			"group": "build",
 			"problemMatcher": [],
 			"detail": "CMake template build task",
-			"preset": "Debug"
+			"preset": "Debug",
 		},
 		{
 			"type": "cmake",
 			"label": "build release",
 			"command": "build",
-			"targets": ["ALL_BUILD"],
+			"targets": [
+				"ALL_BUILD"
+			],
 			"group": "build",
 			"problemMatcher": [],
 			"detail": "CMake template build task",

@@ -1,3 +1,8 @@
 {
-	"dependencies": ["kissfft", "boost-asio", "ixwebsocket"]
+  "dependencies": [
+    "kissfft",
+    "boost-asio",
+    "ixwebsocket"
+  ],
+  "builtin-baseline": "b545373a9a536dc559dac8583467a21497a0e897"
 }
